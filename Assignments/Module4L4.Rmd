@@ -1,0 +1,73 @@
+---
+title: "Module4L4"
+author: "Neha Parulekar"
+date: "February 28, 2016"
+output: word_document
+---
+
+## Additional packages needed
+ 
+To run the code in M04_Lesson_04.Rmd you may need additional packages.
+
+* If necessary install these packages.
+
+`install.packages("arules");`    
+`install.packages("arulesViz");`       
+`install.packages("Matrix");`    
+      
+
+```{r}
+require(arules)
+require(arulesViz)
+require(Matrix)
+```
+
+**Loading the data** I choose chess data from the link given.
+
+```{r}
+# Checking the working directory and loading the data
+setwd("c:/Users/Neha/Desktop")
+ChessData <- read.table(file = "chess.dat" ,sep=",")
+head(ChessData)
+summary(ChessData)
+
+# # default settings result in zero rules learned
+ChessData.d <- apriori(ChessData, parameter = list(support = 0.1, confidence = 0.8, minlen = 1))
+summary(ChessData.d)
+
+# set better support and confidence levels to learn more rules
+
+# Tried different sets of rules but still get the output value as 0.
+ChessData.d <- apriori(ChessData, parameter = list(support = 0.02, confidence = 0.9, minlen = 2))
+summary(ChessData.d)
+
+ChessData.d <- apriori(ChessData, parameter = list(support = 0.01, confidence = 0.5, minlen = 4))
+summary(ChessData.d)
+
+ChessData.d <- apriori(ChessData, parameter = list(support = 0.05, confidence = 0.5, minlen = 1))
+summary(ChessData.d)
+
+```
+
+
+##**Association Rules with Apriori Algorithms**
+Assoiation rules with Apriori Algorithms is generally used for mining frequent itemsets.The Apriori algorithm employs level-wise search for frequent itemsets. The implementation of Apriori used includes some improvements (e.g., a prefix tree and item sorting).
+
+###**Usage**
+apriori(data, parameter = NULL, appearance = NULL, control = NULL)
+
+### Arguments
+
+**Data**  any data structure which can be coerced into transactions (e.g., a binary matrix or data.frame).
+
+**Parameter** object of class APparameter or named list. The default behavior is to mine rules with support 0.1, confidence 0.8, and maxlen 10.
+
+**Appearance** object of class APappearance or named list. With this argument item appearance can be restricted (implements rule templates). By default all items can appear unrestricted.
+
+**Control** object of class APcontrol or named list. Controls the algorithmic performance of the mining algorithm (item sorting, etc.)
+
+###**Values**
+Returns an object of class rules or itemsets.
+
+
+#### Reference : http://www.inside-r.org/packages/cran/arules/docs/apriori

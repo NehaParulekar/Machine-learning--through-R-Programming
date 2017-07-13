@@ -1,0 +1,219 @@
+---
+title: "Twitter US Airline Sentiment"
+author: "Neha Parulekar"
+output: word_document
+---
+## Additional packages needed
+ * If necessary install these packages.
+
+`install.packages("ggplot2");` 
+`install.packages("gridExtra");`
+`install.packages("maps");`
+  
+```{r}
+require(ggplot2)
+require(gridExtra)
+require(maps)
+```
+
+#loading the data 
+```{r}
+getwd()
+setwd("C:/Users/Neha/Desktop")
+data = read.csv('Tweets.csv')
+dim(data)
+str(data)
+```
+
+# Exploratory data analysis: chiecking the columns containing no data (NAs)
+```{r}
+# find the cells cintaining "" , " " or NAs
+data <- as.data.frame(apply(data, 2, function(x) gsub("^$|^$", NA, x)))
+
+# Checking for cols containing NAs and their total number
+checkdata <- apply(data, 2, function(x) sum(is.na(x)))
+as.data.frame(checkdata )
+```
+We can see that columns like airline_sentiment_gold and negativereason_gold are mostly empty columns with NAs and have no information. Columns like negativereason, tweet_location and user_timezone has partial data.
+
+I would try to explore Negative sentiment and tweet location.
+
+# Sentiment Analysis:
+# trying to get the proportion of tweets with each sentiment
+
+```{r}
+prop.table(table(data$airline_sentiment))
+```
+We can see that most of the tweets contain negative sentiment, as given by the curators of the dataset.
+
+```{r}
+# generate a dataframe for plotting in ggplot2 
+SmallData <- as.data.frame(prop.table(table(data$airline_sentiment)))
+colnames(SmallData) <- c('Sentiment', 'Frequency')
+SmallData
+
+# create blank theme for pie chart 
+
+
+gbar <- ggplot(SmallData, aes(x = Sentiment, y = Frequency, fill = Sentiment))+  scale_fill_brewer(palette="Set3")
+gpie = ggplot(SmallData, aes(x = "", y = Frequency, fill = Sentiment)) + scale_fill_brewer(palette="Set3")
+
+plot1 <- gbar + geom_bar(stat = 'identity') + ggtitle("Overall Sentiment") + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.y = element_text(vjust = 2), axis.title.x = element_text(vjust = -1))
+
+plot2 <- gpie + geom_bar(stat = 'identity') + coord_polar("y", start = 0)  + theme(axis.title.x = element_blank()) + geom_text(aes(y = Frequency/3 + c(0, cumsum(Frequency)[-length(Frequency)]),label = round(Frequency,2)), size = 4) + ggtitle('Overall Sentiment')
+
+grid.arrange(plot1, plot2, ncol = 1, nrow = 2)
+
+```
+
+# Percentage of tweets per airline
+
+```{r}
+# get the proportion of tweets per airline and convert it into a dataframe
+TweetDataFrame <- as.data.frame(prop.table(table(data$airline)))
+colnames(TweetDataFrame) <- c('airline' , 'Frequency')
+TweetDataFrame
+
+# Plotting a bar graph to get the percentage of tweets per Airline
+
+gbar <- ggplot(TweetDataFrame, aes(x = airline, y = Frequency, fill = airline))
+
+gbar + geom_bar(stat = 'identity') + scale_colour_gradientn(colours=rainbow(4)) + ggtitle('Percentage of Tweets Per Airline') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1)) 
+```
+
+# Proportion of Negative sentiments per airline
+
+```{r}
+# get the proportion of tweets per airline and convert it into a dataframe
+
+TweetDataFrame <- as.data.frame(prop.table(table(data$airline_sentiment, data$airline )))
+colnames(TweetDataFrame) <- c('Sentiment', 'Airline', 'Percentage_Tweets')
+
+# PLotting the graph 
+
+gbar <- ggplot(TweetDataFrame, aes(x = Airline, y = Percentage_Tweets, fill = Sentiment))
+
+# Plotting the graph to show tweet sentiment per 
+
+plot <- gbar + geom_bar(stat = 'identity') +   ggtitle('Proportion of Tweets per Airline') + scale_fill_brewer() + theme (plot.title = element_text(size = 14, face = 'bold', vjust = 1))
+
+plot2 <- gbar + geom_bar(stat = 'identity', position = 'fill') +   ggtitle('Proportion of Tweets per Airline') + scale_fill_brewer() + theme (plot.title = element_text(size = 14, face = 'bold', vjust = 1))
+
+grid.arrange(plot, plot2)
+
+```
+
+
+# Finding the general Reasons for Negative Sentiment
+
+```{r}
+# Creating a data frame to get the reasons for negative tweets
+
+TweetDataFrame <- as.data.frame(prop.table(table(data$negativereason)))
+colnames(TweetDataFrame) <- c("reason", "Frequency")
+TweetDataFrame
+# Removing the first row
+TweetDataFrame = TweetDataFrame[-1,]
+TweetDataFrame
+
+NegReaplot <- ggplot(TweetDataFrame, aes(x = reason, y = Frequency)) + geom_bar(stat = 'identity', fill = 7) + ggtitle('Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_text(vjust = -0.1), axis.text.x = element_text(angle = 45, size = 10, vjust = 1))
+NegReaplot
+```
+
+# Reasons For Negative Sentiment per airline 
+
+```{r}
+# First subset the data airline wise then plot to show the reason for negative sentiment
+
+# Subset the data for American Airlines
+AmericanAirline <- subset(data, airline = 'American')
+
+# Get the plot
+AAplot <- ggplot(as.data.frame(prop.table(table(AmericanAirline$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('American Airlines: Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+
+# Subset the data for US Airways
+USAirways <- subset(data, airline = 'US Airways')
+
+# Generate the plot
+USAplot <- ggplot(as.data.frame(prop.table(table(USAirways$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('US Airways: Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+USAplot
+
+# Subset the data for Delta 
+Delta <- subset(data, airline = 'Delta')
+
+# Generate the plot 
+Delplot <- ggplot(as.data.frame(prop.table(table(Delta$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('Delta : Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+Delplot
+
+# Subset the data for Southwest 
+Southwest <- subset(data, airline = 'Southwest')
+
+# Generate the plot 
+SWplot <- ggplot(as.data.frame(prop.table(table(Southwest$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('Southwest : Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+SWplot
+
+# Subset the data for Virgin 
+Virgin <- subset(data, airline = 'Virgin')
+
+# Generate the plot 
+Virplot <- ggplot(as.data.frame(prop.table(table(Virgin$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('Virgin : Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+Virplot
+
+
+# Subset the data for United
+United <- subset(data, airline = 'United')
+
+# Generate the plot 
+Unplot <- ggplot(as.data.frame(prop.table(table(United$negativereason))), aes(x = Var1, y = Freq)) + geom_bar(stat = 'identity', fill = 'Purple') + ggtitle('United : Reasons for Negative Sentiment') + theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1), axis.title.x = element_blank(), axis.text.x = element_text(angle = 30, size = 10, vjust = 1))
+Unplot
+
+```
+
+# Location of tweets: Visualisation on maps
+```{r}
+# Get locations of the tweet
+Location <- data$tweet_coord
+Location <- Location[complete.cases(Location)]
+Location <- as.data.frame(Location)
+Location$count = 1 
+Location$Location = as.character(Location$Location)
+
+# remove the duplicate coordinates and count the no of time they appear
+Location <- aggregate(count ~ Location, data = Location, FUN = sum)
+Location <- Location[-5]
+coords <- strsplit(Location$Location,",")
+
+# Now separate longitude and latitude
+
+lat <- NULL
+long <- NULL
+
+for (i in 1:length(coords)) {
+  
+  lat = c(lat, substring(coords[[i]][1], 2))
+  long = c(long, coords[[i]][2])
+}
+
+Location$lat = lat
+Location$long = long 
+
+Location$long = substr(Location$long, 1, nchar(Location$long)-1)
+
+head(Location)
+dim(Location)
+
+# PLot these on the map of United States
+
+UStates <- map_data("state")
+UStates$group <- as.factor(UStates$group)
+
+USplot <- ggplot() 
+
+USplot + geom_polygon(data=UStates, aes(x=long, y=lat, group = group), fill = 'lightblue') + ggtitle("Location of tweets across the United States")
+
+USplot +  geom_point(data=Location, aes(x=long, y=lat, size = count), color = "coral1") + scale_size(name="Total Tweets")
+
+USplot + xlim(-125, -65) + ylim(25, 50)
+
+USplot
+```

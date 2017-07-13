@@ -1,0 +1,92 @@
+---
+title: "Module8L1"
+author: "Neha Parulekar"
+date: "March 21, 2016"
+output: word_document
+---
+
+# Additional packages needed
+
+`install.packages("tm");`   
+`install.packages("wordcloud");`
+`install.packages("RTextTools");` 
+```{r}
+require(tm)
+require(wordcloud)
+require(RTextTools)
+```
+
+# Data 
+```
+You have brains in your head. You have feet in your shoes. You can steer yourself in any direction you choose. You're on your own, and you know what you know. And you are the guy who'll decide where to go.
+
+- Dr. Seuss
+```
+
+**Perform the following tasks (either by hand or in R):**
+
+***Create a term by document matrix for the Dr. Seuss quote. Assume each sentence is a new documment.**
+***Calculate the td-idf for three terms in the text. Assume each sentence is a new documment.**
+
+calculating the td-idf, we get respective td-idf for
+*brains = 1.160964
+*can = 0.580482
+*youre = 0.773976
+```{r}
+SeussQuote <- c(D1 = "You have brains in your head.",
+                D2 = "You have feet in your shoes.",              
+                D3 = "You can steer yourself in any direction you choose.",
+                D4 = "You're on your own, and you know what you know.",
+                D5 = "And you are the guy who'll decide where to go.")
+
+# convert these documents into a corpus.
+SeussQuoteCor <- Corpus(VectorSource(SeussQuote))
+# Getting the summary of the data
+summary(SeussQuoteCor)
+
+# cleaning things up a bit. 
+# Remove the white space
+SeussQuoteCor <- tm_map(SeussQuoteCor, stripWhitespace)
+# First we convert all of the text to lowercase
+SeussQuoteCor <- tm_map(SeussQuoteCor,content_transformer(tolower))
+# then remove punctuation
+SeussQuoteCor  <- tm_map(SeussQuoteCor, removePunctuation)
+# remove common English stopwords.(if any)
+SeussQuoteCor <- tm_map(SeussQuoteCor, removeWords, stopwords("english"))
+
+# have a look at what's left by inspecting.
+inspect(SeussQuoteCor)
+
+# Building a Document-Term Matrix.
+TermDocumentMatrix <- TermDocumentMatrix(SeussQuoteCor)
+inspect(TermDocumentMatrix[, 1:5])
+
+DocumentTermMatrix <- DocumentTermMatrix(SeussQuoteCor, control = list(weighting = weightTfIdf))
+as.matrix(DocumentTermMatrix)
+
+```
+***Write a regular expression to segment the Dr. Seuss quote in to seperate sentences.**
+
+```{R}
+Quote <- c("You have brains in your head. You have feet in your shoes. You can steer yourself in any direction you choose. You're on your own,and you know what you know. And you are the guy who'll decide where to go")
+
+# Printing the quote
+print(Quote)
+
+# segmenting the Dr. Seuss quote in to seperate sentences
+strsplit(Quote, "\\. ")
+```
+
+***Write a regular expression to tokenize the Dr. Seuss quote.**
+
+```{r}
+print(Quote)
+
+# tokenize the Dr. Seuss quote
+strsplit(Quote, " ")
+
+```
+***Create a frequency signature for the Dr. Seuss quote. Assume each sentence is a new documment.**
+
+Assuming each sentence is a new document. Looking at the pair of words, "brains & Feet", we can see that there is no occurance of brains and feet each without each other and no co-occurance. Also the total no of word count is 14 per tdm. Heance we can say that the frequency signatue would be [0,1,1,14]
+

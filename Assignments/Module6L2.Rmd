@@ -1,0 +1,158 @@
+---
+title: "Module6L2"
+author: "Neha Parulekar"
+date: "March 11, 2016"
+output: word_document
+---
+
+# Additional packages needed
+ 
+`install.packages("ggplot2");`            
+`install.packages("C50");`     
+`install.packages("gmodels");`     
+`install.packages("rpart");`     
+`install.packages("rattle");`     
+`install.packages("RColorBrewer");`     
+`install.packages("tree");`     
+`install.packages("party");`     
+
+```{r}
+require("ggplot2");
+require("C50");
+require("gmodels");
+require("rpart");
+require("RColorBrewer");
+require("tree");
+require("party");
+```
+
+##**About the dataset**
+The dataset used is taken from UCI Machine learning Repository. The dataset is **Teaching Assistant Evaluation Dataset**. The data consist of evaluations of teaching performance over three regular semesters and two summer semesters of 151 teaching assistant (TA) assignments at the Statistics Department of the University of Wisconsin-Madison. The scores were divided into 3 roughly equal-sized categories ("low", "medium", and "high") to form the class variable.
+
+Attribute Information.
+1. Whether of not the TA is a native English speaker (binary); 1=English speaker, 2=non-English speaker 
+2. Course instructor (categorical, 25 categories) 
+3. Course (categorical, 26 categories) 
+4. Summer or regular semester (binary) 1=Summer, 2=Regular 
+5. Class size (numerical) 
+6. Class attribute (categorical) 1=Low, 2=Medium,  3=High 
+	   
+```{r}
+# Loading the dataset 
+
+Data_Url <-"https://archive.ics.uci.edu/ml/machine-learning-databases/tae/tae.data"
+TAData <- read.csv(url(Data_Url), header = FALSE, sep = ",")
+head(TAData)
+```
+
+```{r}
+##Step 1: Decision Trees -----------------------------------
+
+# Whether of not the TA is a native English speaker: 1=English speaker, 2=non-English speaker
+
+##Step 2: Exploring and preparing the data -----------------------
+str(TAData)
+
+# look at the class
+table(TAData$V1)
+
+# create a random sample for training and test data
+set.seed(99999)
+TA_rand <- TAData[order(runif(151)),]
+
+# compare the original order and TA_rand(random order)
+summary(TAData$V6)
+summary(TA_rand$V6)
+
+head(TAData$V6)
+head(TA_rand$V6)
+
+# split the data frames
+TAData_train <- TA_rand[1:100,]
+TAData_test <- TA_rand[101:151,]
+
+# converting int to factors
+TAData_train$V1 <- as.factor(TAData_train$V1)
+TAData_test$V1 <- as.factor(TAData_test$V1)
+
+# check proportion of class variable
+prop.table(table(TAData_train$V1))
+prop.table(table(TAData_test$V1))
+
+## Step 3: Training a model on the data ---------------------
+
+model <- C5.0(TAData_train[-1],TAData_train$V1)
+
+# display simple facts about the tree
+model
+
+# display detailed information about the tree
+summary(model)
+
+
+## Step 4: Evaluating model performance -------------------
+
+# create a factor vector of predictions(model) on test data
+TAData_pred <- predict(model, TAData_test)
+
+# cross tabulation of predicted versus actual classes
+
+CrossTable(TAData_test$V1, TAData_pred, prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE, dnn = c('actual type', 'predicted type'))
+
+formula <- V1 ~ V2 + V3 + V4 + V5 + V6
+
+fit = rpart(formula, method = "class", data = TAData_train)
+
+# display the results
+printcp(fit) 
+# visualize cross-validation results
+plotcp(fit)
+# detailed summary of splits
+summary(fit) 
+
+# create additional plots 
+
+# two plots on one page
+par(mfrow = c(1,2)) 
+# visualize cross-validation results 
+rsq.rpart(fit) 
+
+# plot tree 
+plot(fit, uniform = TRUE, main = "Regression Tree for'V1'")
+text(fit, use.n = TRUE, all = TRUE, cex = .8)
+
+### ----------------  plot tree
+
+plot(fit, uniform = T, main = "Classification Tree for TA ")
+text(fit, use.n = TRUE, all = TRUE, cex = .8)
+
+##----------------- TREE package
+
+tr = tree(formula, data = TAData_train)
+summary(tr)
+plot(tr); text(tr)
+
+##-------------------Party package
+
+ct = ctree(formula, data = TAData_train)
+plot(ct, main ="Conditional Inference Tree")
+
+# Estimated class probabilities
+tr.pred = predict(ct, newdata = TAData_train, type = "prob")
+
+#Table of prediction errors
+table(predict(ct), TAData_train$V1)
+
+```
+
+***Generate a Decision Tree with your data. You canuse any method/package you wish. Answer the following questions:**
+
+***Does the size of the data set make a difference?*** 
+I think the size of the dataset makes a big difference.I think  increase in the size of the dataset would reduce the error. But this should be done keeping in mind not to overfit the tree as sometime even though the accurary becomes constant, we have a increase in tree subsets with incrase in data size. As we can see with this data it would have had helped if the dataset contained more attributes of binary classification as that would have give more tree subsets which would have helped in better accuracy of the dataset.
+
+***Do the rules make sense? If so why did the algorithm generate good rules? If not, why not?**
+Since the dataset does not have many binary attributes the rules makes sense as The decision tree can be linearized into decision rules, where the outcome is the contents of the leaf node, and the conditions along the path form a conjunction in the if clause. Thus helping in finding accurate reults.
+
+***Does scaling, normalization or leaving the data unscaled make a difference?**
+Decision tree does not require scaling though unless we would like to compare with other supervised learning methods.
+

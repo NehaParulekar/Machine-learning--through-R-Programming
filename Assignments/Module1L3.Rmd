@@ -1,0 +1,279 @@
+---
+title: "Module1L3"
+author: "Neha Parulekar"
+date: "January 25, 2016"
+output: word_document
+---
+
+## Homework Question 2
+
+_Exploratory Data Analysis assignment_
+
+* Load the file M01_quasi_twitter.csv
+* Answer the following questions for the data in each column:
+    * How is the data distributed?
+    * Test distribution assumptions (e.g. normal distributions or skewed?)
+    * What are the summary statistics?
+    * Are there anomalies/outliers?
+* identify useful raw data & transforms (e.g. log(x))
+* identify data quality problems
+* identify outliers
+* identify subsets of interest
+* suggest functional relationships
+
+To run the code in you may need additional packages.
+
+If necessary install `ggplot2` package.
+
+`install.packages("ggplot2"); 
+
+```{r}
+require(ggplot2)
+```
+
+
+```{r}
+setwd("C:/Users/Neha/Desktop")
+twitterdataset <-read.csv("M01_quasi_twitter.csv")
+head(twitterdataset)
+library(ggplot2)
+qplot(screen_name, data=twitterdataset) 
+```
+
+**Answers**
+
+1. The data is distributed normally.
+2. The data follows uniform distribution, thus no normal or skewed distribution.
+
+3. The summary of the data set is
+```{r}
+summary(twitterdataset$screen_name)
+```
+4. There are no outliers.
+5. There are no transforms, quality problems, outliers, subset intrest.
+
+
+**created_at_month**
+```{r}
+qplot(created_at_month, data=twitterdataset)
+qqnorm(twitterdataset$created_at_month)
+qqline(twitterdataset$created_at_month)
+```
+
+1. skewed distribution to the left
+2. this is not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$created_at_month)
+```
+4. No
+5. No
+
+**created_at_day**
+```{r}
+ggplot(twitterdataset)+aes(x=created_at_day)+geom_histogram()
+```
+
+1. uniform distribution 
+2. this is not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$created_at_day)
+```
+4. drop at no 34
+5. no
+
+**created_at_year**
+```{r}
+ggplot(twitterdataset)+aes(x=created_at_year)+geom_histogram()
+```
+
+1.uniform distribution with peaks in 2009 and 2014. 
+2. Not a normal distribution.
+3. summary
+```{r}
+summary(twitterdataset$created_at_year)
+```
+4.outlier at 2006
+5. No
+
+**country**
+```{r}
+qplot(country, data=twitterdataset)
+```
+
+1.uniform distribution with peak at USA
+2. not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$country)
+```
+4. no
+5. no
+
+**location**
+```{r}
+qplot(location, data=twitterdataset)
+```
+
+1. its a uniform distribution
+2. not a normal distribution
+3. sumary
+```{r}
+summary(twitterdataset$location)
+```
+4. No
+5. No
+
+**friends_count**
+```{r}
+qplot(friends_count, data=twitterdataset)
+qqnorm(twitterdataset$friends_count)
+qqline(twitterdataset$friends_count)
+```
+
+1. skewed distribution to the left
+2. not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$friends_count)
+```
+4. No
+5. No
+
+**followers_count**
+```{r}
+qplot(followers_count, data=twitterdataset)
+qqnorm(twitterdataset$followers_count)
+qqline(twitterdataset$followers_count)
+```
+1. skewed distribution
+2. not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$followers_count)
+```
+4. outliers beyond 5million
+5. No
+
+**statuses_count**
+
+```{r}
+qplot(statuses_count, data=twitterdataset)
+qqnorm(twitterdataset$statuses_count)
+qqline(twitterdataset$statuses_count)
+```
+1. skewed distribution
+2. not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$followers_count)
+```
+4. outliers present
+5. No
+
+**favourites_count**
+
+```{r}
+qplot(favourites_count, data=twitterdataset)
+qqnorm(twitterdataset$favourites_count)
+qqline(twitterdataset$favourites_count)
+```
+
+1. skewed distribution
+2. Not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$favourites_count)
+```
+4. outliers present
+5. No
+
+**dob_day**
+```{r}
+ggplot(twitterdataset)+aes(x=dob_day)+geom_histogram()
+```
+1. uniformly distributed
+2. not a normal distribution
+3. summary
+```{r}
+summary(twitterdataset$dob_day)
+```
+4. outliers at 31
+5. No
+
+**dob_year**
+```{r}
+ggplot(twitterdataset)+aes(x=dob_year)+geom_histogram()
+```
+1. uniform distribution with a peak at 1990
+2. No
+3. summary
+```{r}
+summary(twitterdataset$dob_day)
+```
+4. no
+5.no
+
+**dob_month**
+```{r}
+qplot(dob_month, data=twitterdataset)
+qqnorm(twitterdataset$dob_month)
+qqline(twitterdataset$created_at_month)
+```
+1. uniform distribution
+2. no
+3. summary
+```{r}
+summary(twitterdataset$dob_month)
+```
+4 outliers beyond 1500
+5. no
+
+**gender**
+```{r}
+qplot(gender, data=twitterdataset)
+```
+1. uniform distribution
+2. no
+3. summary
+```{r}
+summary(twitterdataset$gender)
+```
+4. outliers at 0
+5. No
+
+**education**
+```{r}
+qplot(education, data=twitterdataset)
+```
+1. No
+2. Normal distribution
+3. summary
+```{r}
+summary(twitterdataset$education)
+```
+4. no
+5.no
+
+**experience**
+```{r}
+qplot(experience, data=twitterdataset)
+```
+1. uniform distribution
+2. No
+3. summary
+```{r}
+summary(twitterdataset$experience)
+```
+4. outliers present
+5. no
+
+
+6. There can be a functional relationship between the age and the friends count or age and followers count
+```{r}
+qplot(dob_year, friends_count, data=twitterdataset)
+qplot(dob_year, followers_count, data=twitterdataset)
+```
+
+

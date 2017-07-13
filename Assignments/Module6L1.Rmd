@@ -1,0 +1,123 @@
+---
+title: "Module6L1"
+author: "Neha Parulekar"
+date: "March 10, 2016"
+output: word_document
+---
+
+# Additional packages needed
+
+`install.packages("ggplot2");`   
+`install.packages("class");`   
+
+
+```{r}
+require(ggplot2)
+require(class)
+```
+
+* Go to the [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/) and find a dataset for supervised classification. Every student MUST use a different dataset so you MUST get approved for which you can going to use. This can be the same dataset you used for the unsupervised clustering as long as the data has some labeled data. 
+
+##**About the dataset**
+The dataset used is taken from UCI Machine learning Repository. The name of the dataset is **Yeast Dataset**. This dataset predicts the cellular localization sites of proteins. There are 8 attributes and 1484 instances. There are8 predictive and 1 outcome variables. The outcome class is localization sites.
+ 
+ Attribute Information.
+1.Sequence Name: Accession number for the SWISS-PROT database
+2.mcg: McGeoch's method for signal sequence recognition.
+3.gvh: von Heijne's method for signal sequence recognition.
+4.alm: Score of the ALOM membrane spanning region prediction program.
+5.mit: Score of discriminant analysis of the amino acid content of the N-terminal region (20 residues long) of mitochondrial and non-mitochondrial proteins.
+6.erl: Presence of "HDEL" substring (thought to act as a signal for retention in the endoplasmic reticulum lumen). Binary attribute.
+7.pox: Peroxisomal targeting signal in the C-terminus.
+8.vac: Score of discriminant analysis of the amino acid content of vacuolar and extracellular proteins.
+9.nuc: Score of discriminant analysis of nuclear localization signals of nuclear and non-nuclear proteins.
+	   
+```{r}
+# Loading the dataset 
+
+data_url <-"https://archive.ics.uci.edu/ml/machine-learning-databases/yeast/yeast.data"
+yeastdata <- read.csv(url(data_url), header = FALSE, sep = "")
+head(yeastdata)
+yeastdata$V1 <- NULL
+yeastdata$V7 <- NULL
+head(yeastdata)
+
+```
+
+## Assignment Questions
+
+* Classify your data using k-Nearest Neighbors. Answer the following questions:
+
+```{r}
+# getting the summary of the dataset
+summary(yeastdata)
+length(yeastdata)
+table(yeastdata$V10)
+print(yeastdata$V10)
+length(yeastdata$V10)
+```
+From the above we can see taht the columns range between 0.00 to 1.00 which is the min and max range. Thus the data does not require scaling or shuffling. Also the data seems to be properly mixed.
+
+
+```{r}
+# plotting between V4,V5  
+qplot(yeastdata$V4, yeastdata$V5, data = yeastdata) + geom_point(aes(colour = factor(yeastdata$V10), shape = factor(yeastdata$V10)))
+
+# plotting between V8,V9
+qplot(yeastdata$V8, yeastdata$V9, data = yeastdata) + geom_point(aes(colour = factor(yeastdata$V10), shape = factor(yeastdata$V10)))
+```
+
+**Normalize the data and finding kNN value**
+
+```{r}
+normalize <- function(x){
+  return((x-min(x)) / (max(x)-min(x)))
+}
+yeastdata.normalised <- as.data.frame(lapply(yeastdata[,c(1:7)], normalize))
+head(yeastdata.normalised)
+summary(yeastdata.normalised)
+nrow(yeastdata.normalised)
+
+# Training and testing 
+yeastdata.normalised.train <-  yeastdata.normalised[1:1250,]
+yeastdata.normalised.test <- yeastdata.normalised[1251:1484,]
+yeastdata.normalized.train.target <- yeastdata[1:1250,c(8)]
+yeastdata.normalized.test.target<- yeastdata[1251:1484,c(8)]
+```
+
+```{r}
+# Taking k value as 5
+k <- 5
+knn.m1 <- knn(train = yeastdata.normalised.train, test = yeastdata.normalised.test, yeastdata.normalized.train.target, k)
+length(knn.m1)
+
+# Taking k value as 7 
+k <- 7
+knn.m2 <- knn(train = yeastdata.normalised.train, test = yeastdata.normalised.test, yeastdata.normalized.train.target, k)
+length(knn.m2)
+
+# Taking k value as 10
+k <- 10
+knn.m3 <- knn(train = yeastdata.normalised.train, test = yeastdata.normalised.test, yeastdata.normalized.train.target, k)
+length(knn.m3)
+
+# confusion matrix 
+cm1 <- table(yeastdata.normalized.test.target, knn.m1)
+cm1
+cm2 <- table(yeastdata.normalized.test.target, knn.m1)
+cm2
+cm3 <- table(yeastdata.normalized.test.target, knn.m1)
+cm3
+```
+
+***Does the k for kNN make a difference? Try for a range of values of k.**
+Using the k values of 5, 7 and 10, from the confusion matrix, we can see that on increasing the k value to 10, the predictions of CYT seems to be better than the other two. However there doesnt seem to be much difference in others, but this could be because of a large overlap of points in protien localization data in yeast. 
+
+***Does scaling, normalization or leaving the data unscaled make a difference for kNN?**
+The yeast data looks properly mixed and also doesnt seem to be requiring scaling or shuffling as the columns range from 0.00 to 1.00. The data has to be normalized as without normalization there was infinity, not a number and or applicable error.
+    
+
+
+
+
+

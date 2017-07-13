@@ -1,0 +1,180 @@
+---
+title: "Module6L3"
+author: "Neha Parulekar"
+date: "March 13, 2016"
+output: word_document
+---
+
+# Additional packages needed
+ 
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`   
+`install.packages("e1071");`   
+`install.packages("kernlab");` 
+
+```{r}
+require(ggplot2)
+require(e1071)
+require(kernlab)
+```
+
+* Go to the [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/) and find a dataset for supervised classification. Every student MUST use a different dataset so you MUST get approved for which you can going to use. This can be the same dataset you used for the unsupervised clustering as long as the data has some labeled data. 
+
+##**About the dataset**
+The dataset used is taken from UCI Machine learning Repository. The name of the dataset is **Yeast Dataset**. This dataset predicts the cellular localization sites of proteins. There are 8 attributes and 1484 instances. There are8 predictive and 1 outcome variables. The outcome class is localization sites.
+
+ Attribute Information.
+  1.  Sequence Name: Accession number for the SWISS-PROT database
+  2.  mcg: McGeoch's method for signal sequence recognition.
+  3.  gvh: von Heijne's method for signal sequence recognition.
+  4.  alm: Score of the ALOM membrane spanning region prediction program.
+  5.  mit: Score of discriminant analysis of the amino acid content of
+	   the N-terminal region (20 residues long) of mitochondrial and 
+           non-mitochondrial proteins.
+  6.  erl: Presence of "HDEL" substring (thought to act as a signal for
+	   retention in the endoplasmic reticulum lumen). Binary attribute.
+  7.  pox: Peroxisomal targeting signal in the C-terminus.
+  8.  vac: Score of discriminant analysis of the amino acid content of
+           vacuolar and extracellular proteins.
+  9.  nuc: Score of discriminant analysis of nuclear localization signals
+	   of nuclear and non-nuclear proteins.
+	   
+```{r}
+# Loading the data 
+# Here I take two columns in the yeast data and two class variable
+data_url <-"https://archive.ics.uci.edu/ml/machine-learning-databases/yeast/yeast.data"
+YeastData <- read.csv(url(data_url), header = FALSE, sep = "")
+head(YeastData)
+YeastData$V1 <- NULL
+YeastData$V2 <- NULL
+YeastData$V3 <- NULL
+YeastData$V6 <- NULL
+YeastData$V7 <- NULL
+YeastData$V8 <- NULL
+YeastData$V9 <- NULL
+head(YeastData)
+summary(YeastData)
+length(YeastData)
+nrow(YeastData)
+
+# making a new data set which has only two class variables
+
+NewYeastData <- YeastData[which(YeastData$V10 == "CYT" | YeastData$V10 == "ME3"),]
+head(NewYeastData)
+nrow(NewYeastData)
+
+
+NewYeastTrainData <- NewYeastData[1:525,]
+nrow(NewYeastTrainData)
+
+NewYeastTestData <- NewYeastData[526:626,]
+nrow(NewYeastTestData)
+
+# Plot 
+
+plot(NewYeastTrainData$V4, NewYeastTrainData$V5, col = as.integer(NewYeastTrainData$V10))
+
+#----------------------Training a model on the data ----
+
+svm.fit <- svm(V10 ~ V4 + V5, data = NewYeastTrainData, kernel = "linear", cost = 10, scale = FALSE)
+plot(svm.fit, NewYeastTrainData, V5 ~ V4, slice = list(V5 = 1, V4 = 2))
+
+# List my Support Vectors
+svm.fit$index
+
+summary(svm.fit)
+
+# Let's chage Cost
+svm.fit1 <- svm(V10 ~ V4 + V5, data = NewYeastTrainData, kernel = "linear", cost = 0.1, scale = FALSE)
+plot(svm.fit1, NewYeastTrainData, V5 ~ V4, slice = list(V5 = 1, V4 = 2))
+
+#Cross-Validation -Find Best Model for prediction 
+tune.out <- tune(svm, V10 ~ V4 + V5, data = NewYeastTrainData, kernel = "linear", ranges = list(cost = c(0.001,0.01,0.1,1,5,10,100)))
+
+bestmodel = tune.out$best.model
+summary(bestmodel)
+
+##-------------------- Predicting the Function ---
+
+
+#Predict testdata(i.e. testdf ) based on bestmodel
+
+ypred = predict(bestmodel, NewYeastTestData)
+ypred
+table(pred = ypred,truth = NewYeastTestData$V10)
+
+
+# look only at agreement vs. non-agreement
+# construct a vector of TRUE/FALSE indicating correct/incorrect predictions
+agreement <- ypred == NewYeastTestData$V10
+table(agreement)
+prop.table(table(agreement))
+
+
+
+##-------------- Improving model performance -----
+
+classifier_rbf <- ksvm(V10 ~ V4 + V5, data = NewYeastTestData, kernel = "rbfdot")
+predictions_rbf <- predict(classifier_rbf, NewYeastTestData)
+predictions_rbf
+
+
+agreement_rbf <- predictions_rbf == NewYeastTestData$V10
+table(agreement_rbf)
+prop.table(table(agreement_rbf))
+
+
+####-------------------------- RADIAL KERNAL ( play with gamma and cost)  ------------------
+
+svmfit1 <- svm(V10 ~ V4 + V5, data = NewYeastTrainData, kernel = "radial", gamma = 1, cost = 100000)
+svmfit1
+plot(svmfit1, NewYeastTrainData)
+
+#------------- Cross Validation to set best choice of gamma and cost
+
+tune.out <- tune(svm, V10 ~ V4 + V5, data = NewYeastTrainData, kernel = "radial", ranges = list(cost = c(0.001,10,100,1000)), gamma = c(0.5,1,2,3,4))
+summary(tune.out)
+
+bestmodel1<-tune.out$best.model
+bestmodel1
+
+plot(bestmodel1, NewYeastTrainData)
+
+### -------------- Polynomial KERNAL
+
+svmfitPoly<- svm(V10 ~ V4 + V5,data = NewYeastTrainData, kernel="polynomial",gamma=1, cost=100000)
+svmfitPoly
+plot(svmfitPoly, NewYeastTrainData)
+
+
+#------------------- Cross validation to set best choice of gamma and cost - POLYNOMIAL
+
+tune.out.poly<- tune(svm, V10 ~ V4 + V5,data = NewYeastTrainData , kernel="polynomial", ranges = list(cost=c(0.001,10,100,1000)), gamma=c(0.5,1,2,3,4)) 
+summary(tune.out.poly)
+bestmodelPoly = tune.out.poly$best.model
+bestmodelPoly
+plot(bestmodelPoly, NewYeastTrainData)
+
+
+###------------------------- SIGMOID KERNEL
+svmfitSig<- svm(V10 ~ V4 + V5,data = NewYeastTrainData, kernel="sigmoid",gamma=1, cost=100000)
+svmfitSig
+plot(svmfitSig, NewYeastTrainData)
+
+#---------------------------Cross validation to set best choice of gamma and cost - SIGMOID
+tune.out.sig<- tune(svm, V10 ~ V4 + V5,data = NewYeastTrainData, kernel="sigmoid", ranges = list(cost=c(0.001,10,100,1000)), gamma=c(0.5,1,2,3,4)) 
+summary(tune.out.sig)
+bestmodelSig = tune.out.sig$best.model
+bestmodelSig
+plot(bestmodelSig, NewYeastTrainData)
+```
+
+* Classify your data using Support Vector Machines. You can use any method/package for SVMs. Answer the following questions:
+
+***How well does the classifier perform?** The classifier looks like a good one from the table and the probability.Except for the nine times of 101, test set has been classified properly. The probability of truth is 91%.
+
+***Try different kernels. How do they effect its performce?** Here I have tried linear, radial, polynomial and sigmoid kernels. After playing around with the gamma and cost values and using a function to find the best model to set the best choice for gamma values and costs and plotting the graphs, it looks like radial is the best classifier and Sigmoid looks good too, however linear and polynomial do not seem to be good. Tune methods finds out the best choice of gamma and cost. It makes is easier to classify classes from one another.
+
+***What might improve its performce?**
+The performance can be improved using the best kernel and gamma and cost. In this dataset I think radial is best kernel to improve performance. It classifies CYT from ME3 localisation site for the yeast protein.

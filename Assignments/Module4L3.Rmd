@@ -1,0 +1,76 @@
+---
+title: "Module4L3"
+author: "Neha Parulekar"
+date: "February 22, 2016"
+output: word_document
+---
+
+## Additional packages needed
+ 
+To run the code in M04_Lesson_03.Rmd you may need additional packages.
+
+* If necessary install these packages.
+
+`install.packages("mclust");`    
+  
+```{r}
+require(mclust)
+```
+
+# Assingment
+
+* Use the same dataset you use for M04 Lesson 02 for the partition (k-means,PAM) and hierarchical clustering from the he the [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/)  
+
+```{r}
+# set the working directory
+setwd("C:/Users/Neha/Desktop")
+
+# load the file
+ProtienExpressionData <- read.csv("Data_Cortex_Nuclear.csv")
+
+# Checking the data 
+head(ProtienExpressionData)
+
+# Removing the NA columns and columns without protien expression (last four cols)from the data 
+
+RemoveColms <- c("MouseID","Genotype","Treatment","Behavior","class")
+ModifiedProtienExpressionData <- ProtienExpressionData[, !(names(ProtienExpressionData) %in% RemoveColms)]
+
+ModifiedProtienExpressionData <- ModifiedProtienExpressionData[complete.cases(ModifiedProtienExpressionData),]
+
+head(ModifiedProtienExpressionData)
+```
+
+***Cluster some of your data using EM based clustering.**
+
+```{r}
+
+# Fitting the data 
+fit <- Mclust(ModifiedProtienExpressionData)
+fit
+
+# Getting the summary
+summary(fit)
+
+# Applying, summarizing and plotting BIC
+BIC = mclustBIC(ModifiedProtienExpressionData)
+summary(BIC)
+plot(BIC)
+```
+
+
+
+```{r}
+# Applying, summarizing and plotting ICL
+ICL = mclustICL(ModifiedProtienExpressionData)
+summary(ICL)
+plot(ICL)
+```
+***How did you choose a model for EM?**  
+***Evaluate the  model performance.**  
+I choose **mclust** model based clustering as it gives BIC, ICL, degrees of freedom as well as log.likelihood. In EM it is essential we give how the data is generated. The model here has 70 cloumns and there are chances that each might have different distributions. In EM we only include columns with either gaussian, binomail or poisson and not a mixture of those. As the data was large it is not an essential means of clustering.
+
+
+***Cluster some of your data using EM based clustering that you also used for k-means,PAM. and hierarchical clustering.** 
+As the BIC value is too high, we can say the model performance is not good, as a good model should have low BIC value. When compaired to other models, k-means, PAM and Heirarchial, this model does not make much sence. There is only one component in the model.
+

@@ -1,0 +1,130 @@
+---
+title: "Module 3"
+author: "Neha Parulekar"
+date: "February 8, 2016"
+output: word_document
+---
+
+## Additional packages needed
+ 
+To run the code in M03_Lesson_02.Rmd you may need additional packages.
+
+* If necessary install the following packages.
+
+* `install.packages("ggplot2");`   
+* `install.packages("reshape2"); `  
+* `install.packages("psych");`    
+
+
+```{r}
+require(ggplot2)
+require(reshape2)
+require(psych)
+
+```
+
+## Assignment 
+
+* Download the compressed data from the U.S. [Bureau of Labor Statistics](https://en.wikipedia.org/wiki/Bureau_of_Labor_Statistics
+) [http://www.bls.gov/](http://www.bls.gov/) @ http://www.bls.gov/cew/data/files/2014/csv/2014_annual_singlefile.zip, and extract the .csv file.  
+* Run Principal Components Analysis on the BLS data and answer the following questions. (You can use any PCA function you wish, i.e. princomp(), prcomp(),  principal() or by hand.)    
+**Reading the file**
+
+```{r}
+# set the working directory
+setwd( "C:/Users/Neha/Desktop")
+# loading the data
+LaborStatistics <- read.csv("2014.annual.singlefile.csv")
+
+# Checking the data 
+names(LaborStatistics)
+
+# retriving the dimensions of the data
+dim(LaborStatistics)
+
+# Removing the first eight columns from the data 
+RemoveCols <- c("area_fips","industry_code","size_code","qtr","own_code","agglvl_code","year","disclosure_code","lq_disclosure_code","oty_disclosure_code")
+LaborStatistics <- LaborStatistics[,!(names(LaborStatistics) %in% RemoveCols)]
+
+# checking the dimensions of the data
+dim(LaborStatistics)
+```
+
+
+* **Run Principal Components Analysis on the BLS data and answer the following questions. (You can use any PCA function you wish, i.e. princomp(), prcomp(),  principal() or by hand.)**
+
+
+```{r}
+LaborStatistic.fit.A <-  princomp(formula = ~., data = LaborStatistics, cor = TRUE, na.action=na.exclude)
+print(LaborStatistic.fit.A)
+LaborStatistic.fit.B <- prcomp(LaborStatistics,center = TRUE, scale.= TRUE)
+#print(LaborStatistic.fit.B)
+
+# getting the summary
+summary(LaborStatistic.fit.A)
+names(LaborStatistic.fit.A)
+summary(LaborStatistic.fit.B)
+```
+
+* **Barplot**
+```{r}
+#plotting the screeplot, barplot, biplot
+#screeplot(LaborStatistic.fit.A)
+barplot(LaborStatistic.fit.A$sdev/LaborStatistic.fit.A$sdev[1])
+#biplot(LaborStatistic.fit.A, expand=100, xlim=c(-0.1, 0.1), ylim=c(-0.1, 0.1)) 
+```
+
+* **ggbiplot**
+```{r}
+#loadint the required package and plotting ggbiplot
+
+library(devtools)
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+fit<- princomp(LaborStatistics, cor=TRUE)
+ggbiplot(fit, labels = rownames(LaborStatistics))
+
+```
+
+## **Answers**
+
+**(a) What proportion of the total variation in the data is explained by each of the principal  components?**
+
+* PC1    PC2    PC3    PC4     PC5     PC6    PC7  
+*  0.3404 0.1363 0.1011 0.0865 0.06378 0.04998 0.0483
+
+* PC8     PC9    PC10    PC11    PC12    PC13    
+* 0.03864 0.03469 0.03117 0.02279 0.01507 0.00894
+
+* PC14    PC15    PC16    PC17   PC18    PC19
+* 0.00576 0.00536 0.00471 0.00331 0.0011 0.00064
+
+* PC20    PC21    PC22    PC23    PC24    PC25
+* 0.00057 0.00047 0.00025 0.00008 0.00002 0.000000
+
+* PC26      PC27     PC28
+* 0.000000 0.0000000 0.000000
+ 
+
+**(b) Plot a screeplot.**
+```{r}
+screeplot(LaborStatistic.fit.A)
+```
+The screeplot is a decreasing plot which shows variance of the first ten PCs. 
+
+**(c) Based on the variation explained for each of these components, which, if any, components would you use?**
+As we can see more than 90% of variance of the data was captured by first 10 PCs. So it would be sufficient to use those components.
+
+
+**(d) Is there evidence of clustering in the data by creating biplots of the each of the components plotted against one another?**
+*It takes too long to run.* 
+But running the **ggbiplot** we can see that there is clustering in data.
+
+
+**(e) Do any of the biplots reveal any interesting structure?**
+*The biplot takes too long to run*
+Ruuning **ggbiplot** we can see the points in the labor statistics data would fall when we project from 28 space to 2 space.They are not evenly scattered about the projections.
+
+**(f) How many pcs are required to explain 75% of the variance in the data?**
+Seven PCs are required to explain 75% of the variance in the data.
+

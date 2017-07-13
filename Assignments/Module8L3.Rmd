@@ -1,0 +1,206 @@
+---
+title: "Module8L3"
+author: "Neha Parulekar"
+date: "March 31, 2016"
+output: word_document
+---
+
+# Additional packages needed
+
+* If necessary install the followings packages.
+
+`install.packages("RTextTools");`
+`install.packages("tm");`
+`install.packages("wordcloud");`
+`install.packages("stringr");`
+`install.packages("qdap");`
+`install.packages("e1071");`
+
+```{r}
+library(RTextTools)
+library(tm)
+library(wordcloud)
+library(stringr)
+library(qdap)
+library(e1071)
+```
+
+
+* Load the file ML.Tweets.csv and ML.Tweets.New.csv (it is online at  'http://nikbearbrown.com/YouTube/MachineLearning/M08/ML.Tweets.csv' and 'http://nikbearbrown.com/YouTube/MachineLearning/M08/ML.Tweets.New.csv' )
+
+```{r}
+# Loading the data
+
+URL <-  "http://nikbearbrown.com/YouTube/MachineLearning/M08/ML.Tweets.csv"
+TweetData <- read.csv(url(URL))
+
+#getting to know the data
+head(TweetData)
+#finding the no of rows
+nrow(TweetData)
+
+# taking first 100 rows of the data
+TweetDataS<- TweetData[1:50,]
+
+#Extracting the tweets with hashtags
+TweetDataNew_hahtags <- str_extract_all(TweetDataS, "#\\w+")
+
+#Cleaning the data
+Clean_TweetsData <- Corpus(VectorSource(TweetDataNew_hahtags))
+
+#Remove the white space
+Clean_TweetsData <- tm_map(Clean_TweetsData, stripWhitespace)
+
+#convert all of the text to lowercase
+Clean_TweetsData <- tm_map(Clean_TweetsData, content_transformer(tolower))
+
+#Remove the puncuations
+Clean_TweetsData <- tm_map(Clean_TweetsData, removePunctuation)
+Clean_TweetsData <- tm_map(Clean_TweetsData, removeWords, stopwords("english"))
+inspect(Clean_TweetsData)
+
+```
+
+***Do the following with ML.Tweets.csv:** 
+***extract and rank a list of the important hashtags (using td-idf or word entropy)**
+Extracting important hashtags using td-idf and findFreqTerm funtions applying them to the Term document Matrix. We can see that "analytics",  "bigdata","iot","machinelearning" are the important hashtags. 
+
+```{r}
+# Document term matrix
+tdm <- TermDocumentMatrix(Clean_TweetsData)
+inspect(tdm[,1:100])
+
+# Using td-idf
+
+DTM <- DocumentTermMatrix(Clean_TweetsData, control = list(weighting = weightTfIdf))
+
+# as matrix
+DTM_Mat <- as.matrix(DTM)
+
+#finding the frequent terms
+findFreqTerms(tdm, lowfreq = 5)
+
+# removing the  sparse terms to narrow it down to 10-30 words
+
+tdm2 <- removeSparseTerms(tdm, sparse =0.99)
+tdm2
+
+#inspecting TDM2 in the form of dataframe
+TDM_DF <- as.data.frame(inspect(tdm2))
+
+# check the no of rows and columns
+nrow(TDM_DF)
+ncol(TDM_DF)
+```
+
+***Cluster the tweets using these hashtags.**    
+***Optional - give the the clusters names based on their dominant hashtags.**
+Clustering the tweet data to find the dominant hashtags. hclust is used. i used  value as 6. Biddata was the top most cluster. All the BMC controlm were grouped together. along with these there are other groups like datascience, healthcare, startup, data.
+the main cluster would be bigdata and apart from that there are machinelearning, algorithms, analytics etc.
+```{r}
+# Clustering the tweets 
+TDM_DF.scale <- scale(TDM_DF)
+
+# applying euclidean and ward
+d <- dist(TDM_DF.scale, method = "euclidean")
+fit <- hclust(d, method = "ward")
+
+# plotting 
+plot(fit)
+Groups <- cutree(fit, k = 6)
+rect.hclust(fit, k = 6, border = "blue")
+
+```
+
+***Classify the tweets in ML.Tweets.New.csv using the cluster lables generated from ML.Tweets.csv.**
+First find hashtag tweets which are important. They are "advantage","analytics","bigdata"     "competitive"    "datascience"     "drivers"   "innova7"         "iot"   "kdn"             "m2m""machinelearning" "marketing"  "security"        "strategy""sustainable"     "tedatibm" "wearable". we can classify big data related clusters like machine learning, data etc to the first cluster in the tweet tree. There are some new hashtags like security, sustainable, advantage which will not go into any clusters from previous tweets.Thus we have to classify tweets.  
+
+```{r}
+# For this we load the new data 
+URL1 <- "http://nikbearbrown.com/YouTube/MachineLearning/M08/ML.Tweets.New.csv"
+TweetDataNew <- read.csv(url(URL1))
+
+#getting to know the data
+head(TweetDataNew)
+#finding the no of rows
+nrow(TweetDataNew)
+
+# taking first 100 rows of the data
+TweetDataNew <- TweetDataNew[1:100,]
+
+#Extracting the tweets with hashtags
+TweetDataNew_hahtags <- str_extract_all(TweetDataNew, "#\\w+")
+
+TweetDataNew <- as.data.frame(TweetDataNew)
+TweetDataNew
+
+#Cleaning the data
+Clean_TweetsDataNew <- Corpus(VectorSource(TweetDataNew_hahtags))
+
+#Remove the white space
+Clean_TweetsDataNew <- tm_map(Clean_TweetsDataNew, stripWhitespace)
+
+#convert all of the text to lowercase
+Clean_TweetsDataNew <- tm_map(Clean_TweetsDataNew, content_transformer(tolower))
+
+#Remove the puncuations
+Clean_TweetsDataNew <- tm_map(Clean_TweetsDataNew, removePunctuation)
+Clean_TweetsDataNew <- tm_map(Clean_TweetsDataNew, removeWords, stopwords("english"))
+inspect(Clean_TweetsDataNew)
+
+```
+
+```{r}
+# Document term matrix
+TDM_new <- TermDocumentMatrix(Clean_TweetsDataNew)
+inspect(TDM_new[,1:100])
+
+# Using td-idf
+
+DTM_new <- DocumentTermMatrix(Clean_TweetsDataNew, control = list(weighting = weightTfIdf))
+
+# as matrix
+DTM_MatNew <- as.matrix(DTM_new)
+
+#finding the frequent terms
+findFreqTerms(TDM_new, lowfreq = 2)
+
+# removing the  sparse terms to narrow it down to 10-30 words
+
+TDM2_new <- removeSparseTerms(TDM_new, sparse =0.99)
+TDM2_new
+
+#inspecting TDM2 in the form of dataframe
+TDM_new_DF <- as.data.frame(inspect(TDM2_new))
+
+# check the no of rows and columns
+nrow(TDM_new_DF)
+ncol(TDM_new_DF)
+
+# Clustering the tweets 
+TDM_new_DF.scale <- scale(TDM_new_DF)
+
+# applying euclidean and ward
+d1 <- dist(TDM_new_DF.scale, method = "euclidean")
+fit1 <- hclust(d1, method = "ward")
+
+# plotting 
+plot(fit1)
+Groups <- cutree(fit1, k = 6)
+rect.hclust(fit1, k = 6, border = "blue")
+```
+
+*** Use the qdap polarity function to score the polarity of the tweets in ML.Tweets.csv.**
+
+```{r}
+#PolarityOfTweets <- polarity(TweetData)
+#PolarityOfTweets
+#PolarityOfTweets$all
+
+#based on hashtags
+#ps <- polarity(TweetDataNew_hahtags)
+#ps
+```
+
+When using qdap ploarity function to score the polarity of the tweets in ML.Tweets.csv should Approximate the sentiment (polarity) of text by grouping variable(s).
+As my R studio stops responding while Trying out the polarity, I could not create a coustom ploarity frame to create a function that would give the approx sentiment to get positive/negative range.

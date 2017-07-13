@@ -1,0 +1,85 @@
+---
+title: "Module 11"
+author: "Neha Parulekar"
+date: "April 4, 2016"
+output: word_document
+---
+
+# Additional packages needed
+
+* If necessary install the followings packages.
+ `install.packages("RCurl");`  
+`install.packages("plyr");`  
+`install.packages("forecast");`      
+
+```{r}
+library(RCurl)
+library(plyr)
+library(forecast)
+```
+
+# Assingment
+
+Answer the following questions:   
+    * Can some form of Time series analysis help in your research project to forcast a prediction?    
+    * If it can apply Time series analysis to your research project? Does it help?     
+    * If (and only if) you can't use some form of Time series analysis help in your research project then apply a form of Time series analysis to the data the Twiiter time series data set M11_Tweets_Miley_Nikki_Taylor.csv (it is online at  'http://nikbearbrown.com/YouTube/MachineLearning/M11/M11_Tweets_Miley_Nikki_Taylor.csv') . Does it help?        
+    * Note you only need to use ONE forcasting approach from Module 11, so there will be only ONE assingment for all the modules and the same assingment for all the modules.      
+
+**My data does not require time series analysis. Thus I am using Twitter data given.
+From the forecast plot we can predict that the no. of tweets remain the same in the coming year. They do not change significantly.**
+
+```{r}
+data <- "http://nikbearbrown.com/YouTube/MachineLearning/M11/M11_Tweets_Miley_Nikki_Taylor.csv"
+data <- read.csv(url(data))
+names(data)
+head(data ,n = 2)
+TweetCount <- count(data)
+
+# set the freq parameter to 12 to indicate monthly readings
+# ts() function to create a new time series
+Tweet_timeseries <- ts(TweetCount$freq, start = c(2000, 1), end = c(2008, 1), frequency = 12) 
+
+plot(Tweet_timeseries, xlab='tweets' ,ylab='Years', main='Twitter Data between 2000-2008')
+
+## -------------   USE ARIMA MODEL --------------------
+
+#creating ranges of possible values for the order parameters p, d, and q.
+d <- 0 : 2
+p <- 0 : 6
+q <- 0 : 6
+
+twitter_models <- expand.grid(d = d, p = p, q = q)
+head(twitter_models, n = 4)
+
+getTSModelAIC <- function(ts_data, p, d, q) {
+
+ts_model <- arima(ts_data, order = c(p, d, q))
+                                              return(ts_model$aic)
+}
+
+getTSModelAICSafe <- function(ts_data, p, d, q) {  result = tryCatch({
+                                                 getTSModelAIC(ts_data, p, d, q)
+  }, 
+error = function(e) {
+  Inf
+  })
+}
+
+# PICK THE BEST MODEL THAT HAS THE SMALLEST AIC 
+twitter_models$aic <- mapply(function(x, y, z) 
+getTSModelAICSafe(Tweet_timeseries, x, y, z), twitter_models$p, 
+                              twitter_models$d, twitter_models$q)
+
+subset(twitter_models,aic == min(aic))
+
+# ARIMA model for best p,d,q order model 
+twitter_model <- arima(Tweet_timeseries, order = c(1, 1, 1))
+summary(twitter_model)
+
+#-------------------       Prediction    ---------------------------------
+plot(forecast(twitter_model, 10))
+```
+
+
+

@@ -1,0 +1,186 @@
+---
+title: "Module 1"
+author: "Neha Parulekar"
+date: "January 25, 2016"
+output: word_document
+---
+
+## M1L2 Homework
+
+This homework assignment focuses on Probability Distributions. 
+
+* Replicate and plot the fat-tailed Cauchy distributions from https://en.wikipedia.org/wiki/Cauchy_distribution
+
+To run the code in you may need additional packages.
+
+If necessary install `ggplot2` package.
+
+`install.packages("ggplot2"); 
+
+```{r}
+require(ggplot2)
+```
+
+```{r}
+ trails <- 3333
+ Rcauchy <- data.frame(A=rcauchy(n=trails, location=0, scale=0.5),
+B=rcauchy(n=trails, location=0, scale=1),  C=rcauchy(n=trails, location=0, scale=2), D=rcauchy(n=trails, location=-2, scale =1))
+ 
+head(Rcauchy)
+summary(Rcauchy)
+
+library(reshape)
+rnd <- melt(data=Rcauchy)
+
+## No id variables; using all as measure variables
+
+head(rnd)
+
+library(ggplot2)
+ggplot(rnd, aes(x=value)) + geom_density(aes(group=variable,color=variable)) + labs(title="Wikipedia Cauchy Distributions", y="P(X)", x="X") + xlim(-5,5)
+
+    ```
+    
+* Load the file M01_Lesson_02_Q1.csv
+* Answer the following questions for the data in each column:
+    * How is the data distributed?
+    * What are the summary statistics?
+    * Are there anomalies/outliers?
+    * Try to regenerate the data in each column.
+    * Plot your regenerated data versus the original data using a faceted graph. How does it compare? 
+    
+```{r}
+setwd("C:/Users/Neha/Desktop")
+dataset <- read.csv("M01_Lesson_02_Q1.csv")
+head(dataset)
+    ```
+    
+**Answers**
+
+1. How is the data distributed?
+
+Distribution of a single variable can be showed by density plots and histograms.
+
+**A**
+
+```{r}
+qplot(A, data = dataset, geom = "histogram")
+qqnorm(dataset$A)
+qqline(dataset$A)
+```
+
+*From the plots above we can say that the data is normally distributed*
+
+2. What are the summary statistics?
+
+```{r}
+summary(dataset$A)
+```
+
+3. Are there anomalies/outliers?
+* There are outliers at 4 and between 13-14
+
+
+**B**
+
+```{r}
+qplot(B, data = dataset, geom = "histogram")
+qqnorm(dataset$B)
+qqline(dataset$B)
+```
+
+*From the plots above we can say that the data is normally distributed*
+
+2. What are the summary statistics?
+
+```{r}
+summary(dataset$B)
+```
+
+3. Are there anomalies/outliers?
+* There are outliers at -3 and beyond 2
+
+**C**
+
+
+```{r}
+qplot(C, data = dataset, geom = "histogram")
+qqnorm(dataset$C)
+qqline(dataset$C)
+ggplot(dataset)+aes(x=C) + geom_density()
+```
+
+*From the plots above we can say that the data is distributed binomially from right skew and integer values*
+
+2. What are the summary statistics?
+
+```{r}
+summary(dataset$C)
+```
+
+3. Are there anomalies/outliers?
+* There are no outliers.
+
+
+**D**
+
+```{r}
+qplot(D, data = dataset, geom = "histogram")
+qqnorm(dataset$D)
+qqline(dataset$D)
+ggplot(dataset)+aes(x=D) + geom_density()
+```
+
+*From the plots above we can say that the data is distributed binomially from right skew and integer values*
+
+2. What are the summary statistics?
+
+```{r}
+summary(dataset$D)
+```
+
+3. Are there anomalies/outliers?
+* There are no outliers.
+
+**E**
+
+```{r}
+qplot(E, data = dataset, geom = "histogram")
+qqnorm(dataset$E)
+qqline(dataset$E)
+```
+
+* From the plots above we can say that the data is distributed uniformaly*
+
+2. What are the summary statistics?
+
+```{r}
+summary(dataset$E)
+```
+
+3. Are there anomalies/outliers?
+* There are no outliers.
+
+
+* Try to regenerate the data in each column.
+
+```{r}
+set.seed(100)
+trails <- 333
+RA <- rnorm(n=trails, mean=9.079, sd=2.89)
+RB <- rnorm(n=trails, mean=0.030, sd=1.29)
+RC <- rbinom(n=trails, size=9, p=0.7)
+RD <- rbinom(n=trails, size=18,p=0.11)
+min<-33.52
+max<-331.80
+RE <- runif(trails, min, max+1)
+regdata<- data.frame(RA,RB,RC,RD,RE)
+summary(regdata)
+```
+
+* Plot your regenerated data versus the original data using a faceted graph. How does it compare? 
+
+```{r}
+pairs(dataset[,2:6])
+pairs(regdata[,1:5])
+

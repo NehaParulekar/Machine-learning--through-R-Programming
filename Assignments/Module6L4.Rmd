@@ -1,0 +1,122 @@
+---
+title: "Module6L4"
+author: "Neha Parulekar"
+date: "March 14, 2016"
+output: word_document
+---
+
+# Additional packages needed
+
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`   
+`install.packages("MASS");`   
+`install.packages("car");` 
+
+```{r}
+require(ggplot2)
+require(MASS)
+require(car)
+```
+
+* Go to the [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/) and find a dataset for supervised classification. Every student MUST use a different dataset so you MUST get approved for which you can going to use. This can be the same dataset you used for the unsupervised clustering as long as the data has some labeled data. 
+
+##**About the dataset**
+The dataset used is taken from UCI Machine learning Repository. The name of the dataset is **Yeast Dataset**. This dataset predicts the cellular localization sites of proteins. There are 8 attributes and 1484 instances. There are8 predictive and 1 outcome variables. The outcome class is localization sites.
+
+Attribute Information.
+1.Sequence Name: Accession number for the SWISS-PROT database
+2.mcg: McGeoch's method for signal sequence recognition.
+3.gvh: von Heijne's method for signal sequence recognition.
+4.alm: Score of the ALOM membrane spanning region prediction program.
+5.mit: Score of discriminant analysis of the amino acid content of the N-terminal region (20 residues long) of mitochondrial and non-mitochondrial proteins.
+6.erl:Presence of "HDEL" substring (thought to act as a signal for retention in the endoplasmic reticulum lumen). Binary attribute.
+7.pox: Peroxisomal targeting signal in the C-terminus.
+8.vac: Score of discriminant analysis of the amino acid content of vacuolar and extracellular proteins.
+9.nuc: Score of discriminant analysis of nuclear localization signals of nuclear and non-nuclear proteins.
+
+```{r}
+# Loading the data  
+data_url <-"https://archive.ics.uci.edu/ml/machine-learning-databases/yeast/yeast.data"
+YeastData <- read.csv(url(data_url), header = FALSE, sep = "")
+head(YeastData)
+YeastData$V1 <- NULL
+YeastData$V7 <- NULL
+
+# About data
+head(YeastData)
+summary(YeastData)
+length(YeastData)
+```
+
+***Classify your data using Linear Discriminant Analysis (LDA). Answer the following questions:**
+
+```{r}
+# Embed PLots
+# scatterplots
+scatterplotMatrix(YeastData[1:5])
+pairs(YeastData[,1:7])
+
+# plot for V2 and V3
+qplot(YeastData$V2, YeastData$V3, data = YeastData) + geom_point(aes(color = factor(YeastData$V10), shape = factor(YeastData$V10)))
+
+# plot for V4 and V5
+qplot(YeastData$V4, YeastData$V5, data = YeastData) + geom_point(aes(color = factor(YeastData$V10), shape = factor(YeastData$V10)))
+
+# Linear Discriminant Analysis for YeastData
+
+lda.m1 <- lda(V10 ~ V4 + V5, data = YeastData)
+lda.m1
+
+# Taking two output variable ME3 and CYT
+NewYeastData <- YeastData[which(YeastData$V10 == "CYT" | YeastData$V10 == "ME3"),]
+head(NewYeastData)
+summary(NewYeastData)
+
+# Plot
+qplot(NewYeastData$V4, NewYeastData$V5, data = NewYeastData) + geom_point(aes(color = factor(NewYeastData$V10), shape = factor(NewYeastData$V10)))
+```
+
+```{r}
+# Linear Discriminant Analysis for NewYeastData
+lda.m2 <- lda(V10 ~ V4 + V5, data = NewYeastData)
+lda.m2
+
+# Predicting
+lda.m2.p <- predict(lda.m2, newdata = NewYeastData[,c(3,4)])
+lda.m2.p
+# Predicting more no. of output variable.
+lda.m1.p <- predict(lda.m1, newdata = YeastData[,c(3,4)])
+
+# Confusion Matrix
+cm.m1 <- table(lda.m1.p$class, YeastData[,c(8)])
+cm.m1
+
+cm.m2 <- table(lda.m2.p$class, NewYeastData[,c(8)])
+cm.m2
+```
+
+```{r}
+### with 4 predictor variables and 2 output variable
+
+lda.m3 <- lda(V10 ~ V2 + V3 + V4 + V5, data = NewYeastData)
+
+# predicting
+lda.m3.p <- predict(lda.m3, newdata = NewYeastData[,c(1,2,3,4)])
+lda.m3.p
+lda.m3.p$class
+
+# confusion matrix
+cm.m3 <- table(lda.m3.p$class, NewYeastData[,c(8)])
+```
+
+***Does the number of predictor variables for LDA make a difference? Try for a range of models using differing numbers of predictor variables.** Trying different number of predictor variable for LDA does make a difference. After trying for 2, 4 and all predictor variable, it can be concluded that, for 2 pedictor variable the accuracy was more that that of 4 or all predictor variable. The 2 peditor just misplaced around 39 of 626, which is less when compared to other predictors.
+
+***What determines the number of linear discriminants in LDA.**
+A	linear	discriminant	is	a	line	that	separates	(i.e.	discriminates)	between	two	classes.	For	
+two	or	more	than		a	linear	combination	of	features	that	characterizes	or	separates	two	or	
+more	classes	of	objects	or	events.A predictor variable is a variable used in regression to predict another variable. Thus we can say that the no. of discriminants depends on difference in predictor values.
+
+***Does scaling, normalization or leaving the data unscaled make a difference for LDA?**
+The yeast data looks properly mixed and also doesnt seem to be requiring scaling or shuffling as the columns range from 0.00 to 1.00. The data has to be normalized as without normalization there was infinity, not a number and or applicable error.
+

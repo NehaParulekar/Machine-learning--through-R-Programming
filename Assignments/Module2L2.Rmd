@@ -1,0 +1,215 @@
+---
+title: "Module 2 Assignment"
+author: "Neha Parulekar"
+date: "February 1, 2016"
+output: word_document
+---
+
+## Assingment
+
+* **Load the file M01_quasi_twitter.csv**
+
+```{r}
+# Loading the M01_quasi_twitter.csv
+getwd()
+setwd("C:/Users/Neha/Desktop")
+QuasiTwitterData <- read.csv("M01_quasi_twitter.csv")
+
+# Checking the data columns and Summary 
+names(QuasiTwitterData)
+summary(QuasiTwitterData)
+```
+
+## Additional packages needed
+ 
+To run the code in Module2L2.Rmd you may need the following packages.
+
+* If necessary install `ggplot2` package.
+
+`install.packages("ggplot2"); 
+`install.packages("reshape2")
+
+```{r}
+require(ggplot2)
+require(reshape2)
+```
+
+* **Generate a linear model for the following:**
+    * A relation between followers_count & gender
+    * A relation between dob_year & statuses_count
+    * A significant linear linear model of your choosing.
+    * A multivariate relation between wage & height, race, age, education & experience
+    * A significant logistic linear model of your choosing.    
+* **Answer the following questions:**
+    * Is the relationship significant?
+    * Are any model assumptions violated?
+    * Is there any multi-colinearity in multivariate models?
+    * In in multivariate models are predictor variables independent of all the other predictor variables?
+    * In in multivariate models rank the most significant predictor variables and exclude insignificant one from the model.
+    * Does the model make sense?
+    
+
+## Answers
+
+* **A relation between followers_count & gender**
+
+```{r}
+# getting the relationship
+m_followers_count_gender <- lm(followers_count ~ gender, data = QuasiTwitterData )
+m_followers_count_gender
+
+# getting the summary
+summary(m_followers_count_gender)
+
+# plotting the data 
+qplot(followers_count, gender, data = QuasiTwitterData) +  geom_smooth(method = lm) + ylab("gender") + xlab("followers_count") + xlim(-100, 1000000)
+```
+**Is the relationship significant?**
+We cannot say that the relationship is significant solely based on the gender and follower counts as there are other factor like friend count, age etc which also play major part in knowing proper follower count.
+
+**Are any model assumptions violated?**
+Passing the model to the plot function we see that model assumptions are violated
+```{r}
+plot(m_followers_count_gender)
+```
+We can see the outliers in residual leverage plot. There is no constant variance, Homoscedasticity.Normality assunption is violated.
+
+**Does the model make sense?**
+No, the model does not make sense as there are other variables which have to be taken into account to have any significance.
+
+* **A relation between dob_year & statuses_count**
+
+```{r}
+# getting the relationship
+m_dob_year_statuses_count <- lm(dob_year ~ statuses_count, data = QuasiTwitterData)
+m_dob_year_statuses_count
+
+# getting the summary 
+summary(m_dob_year_statuses_count)
+
+# plotting the data
+qplot(dob_year, statuses_count, data = QuasiTwitterData) + geom_smooth(method = lm) + xlab("dob_year") + ylab("statuses_count") + ylim(-100, 100000)
+```
+**Is the relationship significant?** 
+The relationship is not significant as the statuses count should not have any relation with the year a person was born. There are many factors which have to be taken into consideration.
+
+**Are any model assumptions violated?**
+Passing the model to the plot function we see that model assumptions are violated
+
+```{r}
+ plot(m_dob_year_statuses_count)
+```
+we can state that there is no constanat variance. we can see outliers in residual leverage plot.
+
+**Does the model make sense?**
+The model does not make sense as there are many factors which have not been taken into account.
+
+* **A significant linear model of your choosing.**
+Plotting a linear model between experience and wage 
+```{r}
+# getting the relationship 
+m_wage_experience <- lm(wage ~ experience, data = QuasiTwitterData) 
+m_wage_experience 
+
+# getting the summary 
+summary(QuasiTwitterData)
+
+# plotting the data
+qplot(experience, wage, data = QuasiTwitterData) + geom_smooth(method = lm) + xlab("experience") + ylab("wage")
+```
+
+**Is the relationship significant?**
+We would generally assume the wages to increase with increase in experience.In the plot we can see a negative slope which means the wages decreases as the experience is increasing. Also we can see that the experience has negative years which is not possible. Thus we cannot reject the null hypothesis, and can conclude that the relationship is **not** significant
+
+**Are any model assumptions violated?**
+Passing the model to the plot function we see that there are model assumptions violated.
+```{r}
+plot(m_wage_experience)
+```
+Like: Normality assumption is violated. outliers can be observed in residual leverage plot. Also, there is no constant variance.
+
+**Does the model make sense?**
+The model does not make sense as there are cases where young people who lack experience could be paid more as the data like education, country ect would also effect the wage.
+
+* **A multivariate relation between wage & height, race, age, education & experience.**
+
+```{r}
+m_wage_height_race_age_education_experience <- lm(wage ~ height + race + age + education + experience, data = QuasiTwitterData)
+m_wage_height_race_age_education_experience
+
+anova(m_wage_height_race_age_education_experience)
+
+```
+
+**Is the relationship significant?**
+When compairing the wages and other variables, we can correlate the wages with other variables and rank them. Thus the relationship is significant. Also the experence cannot be negative as seen above.
+
+**Are any model assumptions violated?**
+```{r}
+# getting the residual plots for the model
+plot(m_wage_height_race_age_education_experience)
+```
+From the plots above we can say that
+* Variables are not independent statistically
+* There is no constant variance
+* Normality assumption is violated
+So we can conclude that model assumptions are violated. 
+
+**Is there any multi-colinearity in multivariate models?** 
+```{r}
+#head(lm.influence(m_wage_height_race_age_education_experience))
+```
+Age, experience and edcation seem to be correlated with each other.
+
+**In in multivariate models are predictor variables independent of all the other predictor variables?**
+No, in case of age, experience and education, these variables are not statistically independent.
+
+**In in multivariate models rank the most significant predictor variables and exclude insignificant one from the model.**
+```{r}
+SubsetVariableData <- subset(QuasiTwitterData, gender == "male", select = c(wage, height, race, age, education, experience))
+beg <- lm(wage ~ height, data = SubsetVariableData)
+end <- lm(wage ~ ., data = SubsetVariableData)
+empty <- empty<-lm(wage ~ 1, data = SubsetVariableData)
+bounds <- list(upper=end, lower=empty)
+stepwise_reg <- step(beg, bounds, direction="forward")
+```
+
+According to the AIC, the most significant variables are experience followed by age and education 
+
+**Does the model make sense?**
+The model makes perfect sense as we can see that wage is altered based on the age, education, experience as we would expect.
+
+
+* **A significant logistic linear model of your choosing.**
+
+Logistic regression measures the relationship between the categorical response variable and one or more predictor variables by estimating probabilities. Often this is used when the variable is binary 
+Can height predict gender?
+
+```{r}
+
+# logistic linear model 
+m_logistic_model_gender <- lm(as.numeric(gender) ~ height, data = QuasiTwitterData)
+m_logistic_model_gender
+
+# getting the summary 
+summary(m_logistic_model_gender)
+
+# Analysis of Variance Table
+anova(m_logistic_model_gender)
+
+# Plotting 
+qplot(height, as.numeric(gender), data = QuasiTwitterData) + stat_smooth(method = "lm", formula = y ~ x, se = FALSE)
+```
+
+**Is the relationship significant?**
+We generally assume that the males would be taller than the females. Thus the relationship would be significant.
+
+**Are any model assumptions violated?**
+Passing the model to the plot function we see that there are **NO** model assumptions violated.
+```{r}
+plot(m_logistic_model_gender)
+```
+
+**Does the model make sense?**
+As we can interpret, the females height range is less than that of males, which was as assumed and the output is binary, we can say that the model makes sense. 
+
